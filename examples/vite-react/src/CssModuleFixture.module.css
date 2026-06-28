@@ -1,0 +1,22 @@
+.card {
+  border: 1px solid #b7c4d1;
+  border-radius: 8px;
+  background: #f8fbfd;
+  padding: 20px;
+}
+
+.title {
+  margin: 0 0 12px;
+  color: #17202a;
+  font-size: 18px;
+}
+
+.button {
+  border: 1px solid #6b7f94;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17202a;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 12px;
+}
