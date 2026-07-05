@@ -79,9 +79,22 @@ test.describe("clipboard handoff pending selection locks", () => {
     await fillComposer(page);
     await installPendingClipboardProbe(page);
 
+    const importedSelectionId = await page.getByTestId("imported-component").evaluate((element) => {
+      if (!(element instanceof HTMLElement)) {
+        throw new Error("Expected imported fixture to be an element");
+      }
+      const selectionId = element.dataset["pickfixId"];
+      if (selectionId === undefined) {
+        throw new Error("Expected imported fixture to have a PickFix selection id");
+      }
+      return selectionId;
+    });
     let importedContextRequested = false;
     await page.route("**/__pickfix/context?id=**", async (route) => {
-      importedContextRequested = true;
+      const url = new URL(route.request().url());
+      if (url.searchParams.get("id") === importedSelectionId) {
+        importedContextRequested = true;
+      }
       const response = await route.fetch();
       await route.fulfill({ response });
     });
