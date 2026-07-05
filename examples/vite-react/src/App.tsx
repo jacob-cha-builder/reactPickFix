@@ -9,7 +9,7 @@ const repeatedItems = ["Alpha", "Beta", "Gamma"] as const;
 function FunctionFixture() {
   return (
     <section className="fixture-card" data-testid="function-component">
-      <h2>Function component</h2>
+      <h2>Function component revenue snapshot</h2>
       <button type="button">Function component action</button>
     </section>
   );

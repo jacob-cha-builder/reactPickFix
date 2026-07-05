@@ -12,7 +12,10 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "tsc --noEmit -p tsconfig.base.json",
+    "dev": "npm run dev --workspace examples/vite-react",
+    "dev:example": "npm run dev --workspace examples/vite-react",
+    "test:e2e": "npm run build --workspace packages/vite-plugin && playwright test",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "typecheck:workspaces": "npm run typecheck --workspaces --if-present",
     "test": "vitest --exclude tests/**/*.spec.ts"
   },

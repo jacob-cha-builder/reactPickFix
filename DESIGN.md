@@ -78,9 +78,8 @@ All spacing derives from a 4px base.
 
 ### Layout
 
-- Inspector panel width: 320px default, min(360px, calc(100vw - 32px)) maximum on small screens.
-- Inspector panel placement: bottom-right by default, switching to bottom sheet behavior under 480px wide.
-- Panel max height: calc(100dvh - 48px), with internal scrolling for context and prompt fields.
+- Inspector panel placement: anchored popover near the selected target with 12px target gap and 8px viewport clamp, choosing the candidate with the least selected-target and nearby-source overlap.
+- Panel max height: min(560px, calc(100dvh - 16px)), with internal scrolling for prompt controls when the selected target is near a viewport edge.
 - Selection outline offset: 2px outside the target bounds; pinned state uses the same geometry with the pinned color token.
 - Prompt composer fields stack vertically and use full available panel width.
 
@@ -122,11 +121,18 @@ All spacing derives from a 4px base.
 
 ### Prompt composer
 
-- **Structure**: stacked fields for text change, size intent, position/layout intent, free-form notes, and copy actions.
-- **Variants**: generic prompt, Claude prompt, Codex command.
-- **Spacing**: group gap `--pf-space-4`, field gap `--pf-space-2`.
+- **Structure**: compact one-column controls with optional `Text 수정` above `Comment`, optional `Font size` for direct text targets, horizontal position slider, vertical position slider, a bottom `Comment` action for the whole draft, compact numbered comment list with per-row delete controls, one copy action, visible generated prompt output below comments, and manual copy fallback.
+- **Slider semantics**: size is hidden unless a direct visible text target is selected; when visible, it centers at no resize, negative values request smaller, and positive values request larger on that text target. Horizontal centers at no movement, negative moves left, and positive moves right. Vertical centers at no movement, negative moves up, and positive moves down on the selected component target.
+- **Number markers**: added comments render as small numbered circular markers attached to the clicked target's top-left edge with no inset, and as matching numbered rows inside the composer.
+- **Comment deletion**: deleting a saved comment removes its marker, renumbers remaining rows and markers from 1, clears any stale generated output, and keeps draft inputs unchanged.
+- **Text changes**: selecting a direct visible text target reveals `Text 수정` above `Comment`, prefilled with the current text. Editing this field does not mutate the DOM and does not create a marker until `Comment` saves it as a numbered comment.
+- **Prompt-first rule**: font-size and position previews are temporary browser state only; reset, close, or selection change restores the DOM, and the browser never writes source files.
+- **Reset behavior**: changing the pinned selection clears draft comment text, slider previews, generated output, copy status, and clipboard fallback. Saved numbered comments and their component markers persist across selection changes until Reset or Close clears the session.
+- **Selection continuity**: after a comment is added, the composer stays available for another comment on the same target. The anchored popover keeps the selected target highlighted and clamps inside the viewport; its chrome lets page clicks pass through while real inputs and buttons stay interactive.
+- **Variants**: generic short prompt and clipboard fallback.
+- **Spacing**: group gap `--pf-space-4`, field gap `--pf-space-2`; slider labels must reserve enough inline space to avoid layout shift when values change.
 - **States**: empty, dirty, generating, copied, clipboard denied, error.
-- **Accessibility**: each field has a visible label, keyboard focus ring, and deterministic tab order.
+- **Accessibility**: each field has a visible label, keyboard focus ring, and deterministic tab order; sliders expose their current value with readable text.
 - **Motion**: copied confirmation fades in/out using opacity only.
 
 ### Toolbar button

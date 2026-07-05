@@ -1,14 +1,19 @@
 import { overlayMarkup } from "./overlay-markup.js";
 import { overlayStyles } from "./overlay-styles.js";
+import { componentSelectionClient } from "./component-selection-client.js";
+import { cursorTargetClient } from "./cursor-target-client.js";
 import { domSnapshotClient } from "./dom-snapshot-client.js";
+import { panelPositionClient } from "./panel-position-client.js";
 import { promptComposerClient } from "./prompt-composer-client.js";
 import { runtimeResolverClient } from "./runtime-resolver-client.js";
+import { selectionContextClient } from "./selection-context-client.js";
+import { textPreviewTargetClient } from "./text-preview-target-client.js";
 
 export const pickfixOverlayClientScript = `
 (() => {
   const rootId = "pickfix-overlay-root";
   const sourceSelector = "[data-pickfix-id]";
-  const state = { active: false, hoverTarget: null, pinnedTarget: null, context: null, requestId: 0, selectionGeneration: 0, contextAbortController: null, promptAbortController: null, clipboardWriteCount: 0 };
+  const state = { active: false, hoverTarget: null, pinnedTarget: null, originalTarget: null, textPreviewTarget: null, cursorTarget: null, context: null, requestId: 0, selectionGeneration: 0, contextAbortController: null, promptAbortController: null, clipboardWriteCount: 0 };
   const addedTabIndexTargets = new Set();
 
 ${runtimeResolverClient}
@@ -97,31 +102,29 @@ ${runtimeResolverClient}
     return true;
   }
 
-  function userFacingReason(context) {
-    if (context.confidence === "high") return "Matched component source";
-    if (context.confidence === "medium") return "Matched nearby component";
-    return "Could not match this element to source";
-  }
-
-  function fallbackContext(resolution) {
-    return {
-      confidence: resolution.confidence,
-      source: { componentName: resolution.ownerChain[0] || "Unmapped element", file: "No source metadata", line: 0, column: 0 },
-      ownerChain: resolution.ownerChain,
-      reason: userFacingReason(resolution),
-    };
-  }
-
-  function isAbortError(error) {
-    return error instanceof DOMException && error.name === "AbortError";
-  }
-
   function handlePointerOver(event) {
     if (!state.active) return;
+    if (pointerInsidePanel(event)) {
+      clearCursorTarget();
+      return;
+    }
     const target = pickTarget(event.target);
-    if (!target) return;
+    if (!target) {
+      clearCursorTarget();
+      return;
+    }
     state.hoverTarget = target;
+    setCursorTarget(target);
     updateOutlines();
+  }
+
+${cursorTargetClient}
+
+  function pointerInsidePanel(event) {
+    const panel = document.querySelector("[data-pickfix-panel]");
+    if (!(panel instanceof HTMLElement) || panel.hidden) return false;
+    const box = panel.getBoundingClientRect();
+    return event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
   }
 
   function handleClick(event) {
@@ -130,7 +133,7 @@ ${runtimeResolverClient}
     if (!target) return;
     blockHostClick(event);
     if (selectionLockedByClipboard()) return;
-    pinTarget(target);
+    pinTarget(target, event.target);
   }
 
   function handleKeyDown(event) {
@@ -148,7 +151,7 @@ ${runtimeResolverClient}
     if (target) {
       event.preventDefault();
       if (selectionLockedByClipboard()) return;
-      pinTarget(target);
+      pinTarget(target, activeElement);
     }
   }
 
@@ -163,40 +166,34 @@ ${runtimeResolverClient}
     return Boolean(element.closest("#" + rootId));
   }
 
-  async function pinTarget(target) {
+${componentSelectionClient}
+${textPreviewTargetClient}
+${panelPositionClient}
+${selectionContextClient}
+
+  async function pinTarget(target, originalTarget) {
     state.selectionGeneration += 1;
     cancelPendingContext();
-    cancelPendingPrompt(); resetPromptComposerSelectionState();
+    cancelPendingPrompt();
+    resetPromptComposerSelectionState(false);
     const requestId = state.requestId;
     state.pinnedTarget = target;
-    state.hoverTarget = target;
+    state.originalTarget = originalTarget instanceof Element ? originalTarget : target;
+    state.textPreviewTarget = resolveTextPreviewTarget(state.originalTarget);
+    syncTextEditField();
+    state.hoverTarget = state.originalTarget;
+    setCursorTarget(state.originalTarget);
     updateOutlines();
     const resolution = resolveElement(target);
-    const context = await contextForResolution(resolution, requestId);
+    const context = await contextForResolution(resolution, requestId, target);
     if (!context || !state.active || state.requestId !== requestId || state.pinnedTarget !== target) return;
-    state.context = context;
+    const selection = await componentSelectionForTarget(target, context, requestId);
+    if (!selection || !state.active || state.requestId !== requestId) return;
+    state.pinnedTarget = selection.target;
+    state.hoverTarget = state.originalTarget;
+    state.context = selection.context;
+    updateOutlines();
     renderPanel();
-  }
-
-  async function contextForResolution(resolution, requestId) {
-    const controller = new AbortController();
-    if (state.requestId === requestId) state.contextAbortController = controller;
-    if (resolution.confidence === "high" || resolution.module) {
-      try {
-        const parameters = new URLSearchParams({ id: resolution.selectionId });
-        if (resolution.module) parameters.set("module", resolution.module);
-        parameters.set("dom", domSnapshot(state.pinnedTarget));
-        const response = await fetch("/__pickfix/context?" + parameters.toString(), { signal: controller.signal });
-        if (response.ok) return response.json();
-      } catch (error) {
-        if (isAbortError(error)) return null;
-        throw error;
-      } finally {
-        if (state.contextAbortController === controller) state.contextAbortController = null;
-      }
-    }
-    if (state.contextAbortController === controller) state.contextAbortController = null;
-    return fallbackContext(resolution);
   }
 
   function renderPanel() {
@@ -212,6 +209,7 @@ ${runtimeResolverClient}
     confidence.dataset.confidence = context.confidence;
     panel.querySelector("[data-pickfix-reason]").textContent = userFacingReason(context);
     panel.hidden = false;
+    updatePanelPosition();
   }
 
 ${promptComposerClient}
@@ -222,8 +220,11 @@ ${promptComposerClient}
     cancelPendingContext();
     state.hoverTarget = null;
     state.pinnedTarget = null;
+    state.originalTarget = null;
+    state.textPreviewTarget = null;
+    clearCursorTarget();
     state.context = null;
-    cancelPendingPrompt();
+    cancelPendingPrompt(); resetPromptComposerSelectionState(true);
     const panel = document.querySelector("[data-pickfix-panel]");
     if (panel) panel.hidden = true;
     updateOutlines();
@@ -233,7 +234,9 @@ ${domSnapshotClient}
 
   function updateOutlines() {
     drawOutline(document.querySelector("[data-pickfix-hover-outline]"), state.hoverTarget);
-    drawOutline(document.querySelector("[data-pickfix-pinned-outline]"), state.pinnedTarget);
+    drawOutline(document.querySelector("[data-pickfix-pinned-outline]"), state.originalTarget || state.pinnedTarget);
+    updatePanelPosition();
+    updateCommentMarkers();
   }
 
   function drawOutline(outline, target) {

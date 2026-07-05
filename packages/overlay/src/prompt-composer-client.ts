@@ -1,29 +1,32 @@
+import { promptComposerCommentsClient } from "./prompt-composer-comments-client.js";
+import { promptComposerPreviewClient } from "./prompt-composer-preview-client.js";
+
 export const promptComposerClient = `
-  const codexInstruction = "Apply this component-scoped change. Follow the verification instructions in the prompt.";
-  const codexCommands = {
-    linux: 'xclip -selection clipboard -o | codex exec "' + codexInstruction + '"',
-    mac: 'pbpaste | codex exec "' + codexInstruction + '"',
-    windows: 'Get-Clipboard | codex exec "' + codexInstruction + '"',
-  };
+${promptComposerCommentsClient}
+${promptComposerPreviewClient}
 
   function bindPromptComposer(root) {
-    root.querySelector("[data-pickfix-copy-source]").addEventListener("click", copySource);
-    root.querySelector("[data-pickfix-composer]").addEventListener("submit", generatePrompt);
-    root.querySelector("[data-pickfix-copy-prompt]").addEventListener("click", () => copyPromptTarget("generic"));
-    root.querySelector("[data-pickfix-copy-claude-prompt]").addEventListener("click", () => copyPromptTarget("claude"));
-    root.querySelector("[data-pickfix-copy-codex-command]").addEventListener("click", copyCodexCommand);
+    root.querySelector("[data-pickfix-composer]").addEventListener("submit", copyPrompt);
+    root.querySelector("[data-pickfix-add-comment]").addEventListener("click", addCollectedComment);
     root.querySelector("[data-pickfix-clipboard-dismiss]").addEventListener("click", clearClipboardFallback);
+    bindSlider(root, "[data-pickfix-intent-size]", "[data-pickfix-size-value]", fontSizeLabel);
+    bindSlider(root, "[data-pickfix-intent-position-x]", "[data-pickfix-position-x-value]", pixelLabel);
+    bindSlider(root, "[data-pickfix-intent-position-y]", "[data-pickfix-position-y-value]", pixelLabel);
+    document.addEventListener("pointermove", trackCommentListPointer, true);
+    document.addEventListener("wheel", scrollCommentListAtPointer, { capture: true, passive: false });
+    document.addEventListener("scroll", updateCommentMarkers, true);
+    window.addEventListener("scroll", updateCommentMarkers);
+    window.addEventListener("resize", updateCommentMarkers);
   }
 
-  async function generatePrompt(event) {
+  async function copyPrompt(event) {
     event.preventDefault();
-    const result = await requestPrompt(promptTarget());
+    const result = await requestPrompt("generic");
     if (!result) return;
-    if (!isCurrentPromptSelection(result.selectionId, result.selectionGeneration)) return;
     const payload = result.payload;
-    const output = document.querySelector("[data-pickfix-prompt-output]");
-    if (output) output.value = payload.prompt;
-    setPromptStatus(payload.summary || "Prompt ready");
+    await copyHandoffText(payload.prompt, "Prompt copied", result.selectionId, result.selectionGeneration);
+    if (!isCurrentPromptSelection(result.selectionId, result.selectionGeneration)) return;
+    showPromptOutput(payload.prompt);
   }
 
   async function requestPrompt(target) {
@@ -37,7 +40,7 @@ export const promptComposerClient = `
     if (state.promptAbortController) state.promptAbortController.abort();
     const controller = new AbortController();
     state.promptAbortController = controller;
-    setPromptStatus(target === "claude" ? "Preparing Claude prompt" : target === "codex" ? "Preparing Codex command" : "Preparing prompt");
+    setPromptStatus("Preparing prompt");
     try {
       const response = await fetch("/__pickfix/prompt", {
         body: JSON.stringify({ selectionId, change: promptChange(), target }),
@@ -71,17 +74,91 @@ export const promptComposerClient = `
   }
 
   function promptChange() {
+    const comments = promptComments();
+    const textEdit = textEditDraft();
     return {
-      text: fieldValue("[data-pickfix-intent-text]"),
-      size: fieldValue("[data-pickfix-intent-size]"),
-      position: fieldValue("[data-pickfix-intent-position]"),
-      notes: fieldValue("[data-pickfix-intent-notes]"),
+      comments,
+      text: comments ? undefined : fieldValue("[data-pickfix-intent-text]"),
+      textEdit: comments ? undefined : textEdit,
+      size: fontSizePhrase(),
+      position: positionPhrase(),
     };
   }
 
-  function promptTarget() {
-    const select = document.querySelector("[data-pickfix-target]");
-    return select && select.value ? select.value : "generic";
+  function textEditDraft() {
+    const field = document.querySelector("[data-pickfix-intent-text-replacement]");
+    const wrapper = document.querySelector("[data-pickfix-text-edit]");
+    if (!(field instanceof HTMLTextAreaElement) || !(wrapper instanceof HTMLElement) || wrapper.hidden) return undefined;
+    const from = field.dataset.pickfixOriginalText || "";
+    const to = field.value.trim();
+    if (!from || !to || from === to) return undefined;
+    return { from, target: selectedComponentName(), to };
+  }
+
+  function textEditPhrase() {
+    const draft = textEditDraft();
+    return draft ? "Text 수정: replace " + quoteText(draft.from) + " with " + quoteText(draft.to) : undefined;
+  }
+
+  function quoteText(value) {
+    return JSON.stringify(value);
+  }
+
+  function syncTextEditField() {
+    const wrapper = document.querySelector("[data-pickfix-text-edit]");
+    const field = document.querySelector("[data-pickfix-intent-text-replacement]");
+    if (!(wrapper instanceof HTMLElement) || !(field instanceof HTMLTextAreaElement)) return;
+    const target = state.textPreviewTarget;
+    if (!(target instanceof HTMLElement)) {
+      wrapper.hidden = true;
+      field.value = "";
+      delete field.dataset.pickfixOriginalText;
+      syncFontSizeField(false);
+      return;
+    }
+    const sourceText = textEditSourceText(target);
+    if (!sourceText) {
+      wrapper.hidden = true;
+      field.value = "";
+      delete field.dataset.pickfixOriginalText;
+      syncFontSizeField(false);
+      return;
+    }
+    wrapper.hidden = false;
+    field.dataset.pickfixOriginalText = sourceText;
+    field.value = sourceText;
+    syncFontSizeField(true);
+  }
+
+  function resetTextEditFieldToOriginal() {
+    const wrapper = document.querySelector("[data-pickfix-text-edit]");
+    const field = document.querySelector("[data-pickfix-intent-text-replacement]");
+    if (!(wrapper instanceof HTMLElement) || !(field instanceof HTMLTextAreaElement)) return;
+    if (!(state.textPreviewTarget instanceof HTMLElement)) {
+      wrapper.hidden = true;
+      field.value = "";
+      delete field.dataset.pickfixOriginalText;
+      syncFontSizeField(false);
+      return;
+    }
+    const sourceText = field.dataset.pickfixOriginalText || textEditSourceText(state.textPreviewTarget);
+    wrapper.hidden = !sourceText;
+    field.value = sourceText;
+    if (sourceText) field.dataset.pickfixOriginalText = sourceText;
+    else delete field.dataset.pickfixOriginalText;
+    syncFontSizeField(Boolean(sourceText));
+  }
+
+  function textEditSourceText(target) {
+    const text = target.textContent || "";
+    return text.replace(/\\s+/g, " ").trim();
+  }
+
+  function syncFontSizeField(available) {
+    const wrapper = document.querySelector("[data-pickfix-font-size-field]");
+    if (!(wrapper instanceof HTMLElement)) return;
+    wrapper.hidden = !available;
+    if (!available) resetSlider("[data-pickfix-intent-size]", "[data-pickfix-size-value]", fontSizeLabel);
   }
 
   function fieldValue(selector) {
@@ -95,47 +172,21 @@ export const promptComposerClient = `
     if (status) status.textContent = message;
   }
 
-  function copySource() {
-    const context = state.context;
-    const selectionId = context && context.source ? context.source.id : undefined;
-    const selectionGeneration = state.selectionGeneration;
-    const source = document.querySelector("[data-pickfix-source-location]");
-    const text = source ? source.textContent || "" : "";
-    copyHandoffText(text, "Source copied", selectionId, selectionGeneration);
+  function showPromptOutput(prompt) {
+    const field = document.querySelector("[data-pickfix-prompt-output]");
+    const wrapper = document.querySelector("[data-pickfix-prompt-output-field]");
+    if (!(field instanceof HTMLTextAreaElement) || !(wrapper instanceof HTMLElement)) return;
+    field.value = prompt;
+    wrapper.hidden = false;
+    updatePanelPosition();
+    field.scrollIntoView({ block: "nearest", inline: "nearest" });
   }
 
-  async function copyPromptTarget(target) {
-    const result = await requestPrompt(target);
-    if (!result) return;
-    const payload = result.payload;
-    await copyHandoffText(payload.prompt, target === "claude" ? "Claude prompt copied" : "Prompt copied", result.selectionId, result.selectionGeneration);
-    if (!isCurrentPromptSelection(result.selectionId, result.selectionGeneration)) return;
-    const output = document.querySelector("[data-pickfix-prompt-output]");
-    if (output) output.value = payload.prompt;
-  }
-
-  async function copyCodexCommand() {
-    const result = await requestPrompt("codex");
-    if (!result) return;
-    if (!isCurrentPromptSelection(result.selectionId, result.selectionGeneration)) return;
-    await copyHandoffText(codexCommandText(result.payload), "Codex command copied", result.selectionId, result.selectionGeneration);
-  }
-
-  function codexCommandText(payload) {
-    const command = typeof payload.command === "string" ? payload.command : codexCommands.mac;
-    return [
-      "Selected component: " + selectedComponentName(),
-      "Copy a prompt first, then run one platform command. This overlay only copies text.",
-      "",
-      "macOS: " + command,
-      "Linux: " + codexCommands.linux,
-      "Windows PowerShell: " + codexCommands.windows,
-    ].join("\\n");
-  }
-
-  function selectedComponentName() {
-    const context = state.context;
-    return context && context.source && context.source.componentName ? context.source.componentName : "Selected component";
+  function resetPromptOutput() {
+    const field = document.querySelector("[data-pickfix-prompt-output]");
+    const wrapper = document.querySelector("[data-pickfix-prompt-output-field]");
+    if (field instanceof HTMLTextAreaElement) field.value = "";
+    if (wrapper instanceof HTMLElement) wrapper.hidden = true;
   }
 
   async function copyHandoffText(text, copiedStatus, selectionId, selectionGeneration) {
@@ -184,10 +235,31 @@ export const promptComposerClient = `
     if (region) region.hidden = true;
   }
 
-  function resetPromptComposerSelectionState() {
+  function resetPromptComposerSelectionState(clearComments) {
+    clearPreview();
     clearClipboardFallback();
-    const output = document.querySelector("[data-pickfix-prompt-output]");
-    if (output) output.value = "";
+    if (clearComments) clearCollectedComments();
+    else {
+      renderCollectedComments();
+      updateCommentMarkers();
+    }
+    resetField("[data-pickfix-intent-text]", "");
+    resetTextEditFieldToOriginal();
+    resetSlider("[data-pickfix-intent-size]", "[data-pickfix-size-value]", fontSizeLabel);
+    resetSlider("[data-pickfix-intent-position-x]", "[data-pickfix-position-x-value]", pixelLabel);
+    resetSlider("[data-pickfix-intent-position-y]", "[data-pickfix-position-y-value]", pixelLabel);
+    resetPromptOutput();
     setPromptStatus("");
+  }
+
+  function resetField(selector, value) {
+    const field = document.querySelector(selector);
+    if (field && "value" in field) field.value = value;
+  }
+
+  function resetSlider(sliderSelector, labelSelector, formatter) {
+    resetField(sliderSelector, "0");
+    const label = document.querySelector(labelSelector);
+    if (label) label.textContent = formatter(0);
   }
 `;

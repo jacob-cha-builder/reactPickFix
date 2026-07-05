@@ -3,6 +3,7 @@ import {
   ComponentContextSchema,
   HandoffModeSchema,
   PromptBundleSchema,
+  PromptChangeSchema,
   PromptIntentSchema,
   ResolverConfidenceSchema,
   SelectionTargetSchema,
@@ -41,6 +42,7 @@ describe("schemas and redaction", () => {
     const validIntent = {
       selectionId: validSelection.id,
       change: {
+        comments: ["Use friendlier copy", "Keep the CTA visible"],
         text: "Use friendlier copy",
         size: "Make the card wider",
         position: "Keep it centered",
@@ -53,8 +55,7 @@ describe("schemas and redaction", () => {
       target: "codex",
       prompt: "Update src/components/Card.tsx and run npm test.",
       summary: "Card copy update",
-      command:
-        "pbpaste | codex exec \"Apply this component-scoped change. Follow the verification instructions in the prompt.\"",
+      command: "pbpaste | codex exec \"Apply this selected React component change.\"",
       warnings: ["low-risk fixture"],
     };
     const sensitiveText = [
@@ -146,5 +147,37 @@ describe("schemas and redaction", () => {
     expect(redacted).not.toContain("hunter2");
     expect(redacted).not.toContain("123456");
     expect(redacted).not.toMatch(/\svalue=/i);
+  });
+
+  it("accepts bounded text edit prompt changes and rejects empty or oversized fields", () => {
+    // Given: prompt changes may include a direct text replacement intent from the overlay.
+    const validTextEdit = {
+      textEdit: {
+        from: "Function component revenue snapshot",
+        target: "FunctionFixture heading",
+        to: "Revenue snapshot",
+      },
+    };
+    const oversizedValue = "x".repeat(2_001);
+
+    // When: text edit payloads cross the schema boundary.
+    const validResult = PromptChangeSchema.safeParse(validTextEdit);
+    const emptyFrom = PromptChangeSchema.safeParse({ textEdit: { ...validTextEdit.textEdit, from: "" } });
+    const emptyTo = PromptChangeSchema.safeParse({ textEdit: { ...validTextEdit.textEdit, to: "" } });
+    const emptyTarget = PromptChangeSchema.safeParse({ textEdit: { ...validTextEdit.textEdit, target: "" } });
+    const oversizedFrom = PromptChangeSchema.safeParse({ textEdit: { ...validTextEdit.textEdit, from: oversizedValue } });
+    const oversizedTo = PromptChangeSchema.safeParse({ textEdit: { ...validTextEdit.textEdit, to: oversizedValue } });
+    const oversizedTarget = PromptChangeSchema.safeParse({
+      textEdit: { ...validTextEdit.textEdit, target: oversizedValue },
+    });
+
+    // Then: only bounded, non-empty replacement fields are accepted.
+    expect(validResult.success).toBe(true);
+    expect(emptyFrom.success).toBe(false);
+    expect(emptyTo.success).toBe(false);
+    expect(emptyTarget.success).toBe(false);
+    expect(oversizedFrom.success).toBe(false);
+    expect(oversizedTo.success).toBe(false);
+    expect(oversizedTarget.success).toBe(false);
   });
 });

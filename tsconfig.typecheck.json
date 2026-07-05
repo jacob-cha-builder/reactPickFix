@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@pickfix/overlay": ["./packages/overlay/src/index.ts"],
+      "@pickfix/overlay/*": ["./packages/overlay/src/*"],
+      "@pickfix/shared": ["./packages/shared/src/index.ts"],
+      "@pickfix/shared/*": ["./packages/shared/src/*"],
+      "@pickfix/vite-plugin": ["./packages/vite-plugin/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "build", "packages/*/dist"]
+}

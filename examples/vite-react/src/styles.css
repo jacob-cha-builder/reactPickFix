@@ -70,6 +70,52 @@ button {
   padding: 8px 12px;
 }
 
+.fixture-card-header {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.fixture-kicker {
+  color: #52667a;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.fixture-badge {
+  border: 1px solid #d8e0e8;
+  border-radius: 999px;
+  color: #52667a;
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+.fixture-copy {
+  color: #52667a;
+  margin: 0 0 12px;
+}
+
+.fixture-definition-list {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 0 12px;
+}
+
+.fixture-definition-list dt {
+  color: #52667a;
+  font-size: 12px;
+  margin: 0 0 4px;
+}
+
+.fixture-definition-list dd {
+  margin: 0;
+}
+
 .u-inline-stack {
   align-items: start;
   display: inline-flex;

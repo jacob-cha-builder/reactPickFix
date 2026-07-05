@@ -37,8 +37,8 @@ test.describe("clipboard handoff pending selection locks", () => {
     const fallbackText = await page.locator("[data-pickfix-clipboard-fallback]").inputValue();
     const statusText = await page.locator("[data-pickfix-prompt-status]").textContent();
     expect(clipboardText).toBe("clipboard sentinel");
-    expect(outputText).toContain("Selected component: FunctionFixture");
-    expect(outputText).not.toContain("Selected component: ImportedFixture");
+    expect(outputText).toContain("Component: FunctionFixture");
+    expect(outputText).not.toContain("Component: ImportedFixture");
     expectHandoffText(fallbackText, "FunctionFixture");
     expect(statusText).toContain("Clipboard blocked");
     expect(statusText).not.toContain("Prompt copied");
@@ -101,28 +101,26 @@ test.describe("clipboard handoff pending selection locks", () => {
     const statusText = await page.locator("[data-pickfix-prompt-status]").textContent();
     expect(importedContextRequested).toBe(false);
     expect(clipboardText).toBe("clipboard sentinel");
-    expect(outputText).toContain("Selected component: FunctionFixture");
-    expect(outputText).not.toContain("Selected component: ImportedFixture");
+    expect(outputText).toContain("Component: FunctionFixture");
+    expect(outputText).not.toContain("Component: ImportedFixture");
     expectHandoffText(fallbackText, "FunctionFixture");
     expect(statusText).toContain("Clipboard blocked");
     expect(statusText).not.toContain("Prompt copied");
   });
 
-  test("keeps source fallback aligned with the locked selection while copy is pending", async ({ page }) => {
-    // Given: FunctionFixture source copy has reached a pending clipboard write.
+  test("keeps copied prompt fallback aligned with the locked selection while copy is pending", async ({ page }) => {
     await page.goto("/");
     await selectFunctionFixture(page);
+    await fillComposer(page);
     await installPendingClipboardProbe(page);
 
-    // When: the user clicks ImportedFixture before the source copy is denied.
-    await page.getByRole("button", { name: "Copy source" }).click();
+    await page.getByRole("button", { name: "Copy prompt" }).click();
     await waitForPendingClipboardWrite(page);
     await clickImportedFixtureWithoutWaiting(page);
     await expect(page.locator("[data-pickfix-component-name]")).toHaveText("FunctionFixture");
     await rejectPendingClipboardWrite(page);
     await settleBrowserWork(page);
 
-    // Then: FunctionFixture source fallback remains current with the still-visible panel.
     await expect(page.locator("[data-pickfix-component-name]")).toHaveText("FunctionFixture");
     await expect(page.locator("[data-pickfix-source-location]")).toContainText("src/App.tsx");
     await expect(page.locator("[data-pickfix-clipboard-fallback-region]")).toBeVisible();
@@ -130,8 +128,8 @@ test.describe("clipboard handoff pending selection locks", () => {
     const fallbackText = await page.locator("[data-pickfix-clipboard-fallback]").inputValue();
     const statusText = await page.locator("[data-pickfix-prompt-status]").textContent();
     expect(clipboardText).toBe("clipboard sentinel");
-    expect(fallbackText).toContain("src/App.tsx");
+    expectHandoffText(fallbackText, "FunctionFixture");
     expect(statusText).toContain("Clipboard blocked");
-    expect(statusText).not.toContain("Source copied");
+    expect(statusText).not.toContain("Prompt copied");
   });
 });

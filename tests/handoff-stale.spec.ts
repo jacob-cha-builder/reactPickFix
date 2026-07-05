@@ -28,7 +28,7 @@ test.describe("clipboard handoff stale responses", () => {
         await route.fulfill({
           body: JSON.stringify({
             ok: true,
-            prompt: "Component-scoped change\nSelected component: FunctionFixture\nSelected file: src/App.tsx",
+            prompt: "Component-scoped change\nComponent: FunctionFixture\nFile: src/App.tsx",
             summary: "Prompt ready",
           }),
           contentType: "application/json",

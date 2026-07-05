@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  fillComposer,
+  selectFunctionFixture,
+  selectImportedFixture,
+} from "./handoff-helpers";
+
+import {
   activateOverlayIfPresent,
   createDelayedContext,
   createDeferred,
@@ -64,6 +70,38 @@ test.describe("overlay selection state controls", () => {
     // Then: only the overlay-added tabindex is removed.
     await expect(functionComponent).not.toHaveAttribute("tabindex", /.+/);
     await expect(importedComponent).toHaveAttribute("tabindex", "7");
+  });
+
+  test("resets draft composer state but keeps saved comments when a new component is selected", async ({ context, page }) => {
+    await context.clearPermissions();
+    await page.goto("/");
+    await selectFunctionFixture(page);
+    await fillComposer(page);
+    await page.getByRole("button", { name: "Comment" }).click();
+    await expect(page.locator("[data-pickfix-comment-list]")).toContainText("1.");
+    await expect(page.locator("[data-pickfix-comment-marker]")).toHaveCount(1);
+    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await expect(page.locator("[data-pickfix-prompt-output]")).toHaveValue(/FunctionFixture/);
+    await expect(page.locator("[data-pickfix-prompt-status]")).not.toHaveText("");
+    const fallback = page.locator("[data-pickfix-clipboard-fallback]");
+    await expect(fallback).toBeVisible();
+    await expect(fallback).toHaveValue(/FunctionFixture/);
+    await expect(page.locator("[data-pickfix-prompt-status]")).toContainText("Clipboard blocked");
+
+    // When: the user selects a different component.
+    await selectImportedFixture(page);
+
+    await expect(page.locator("[data-pickfix-component-name]")).toHaveText("ImportedFixture");
+    await expect(page.locator("[data-pickfix-intent-text]")).toHaveValue("");
+    await expect(page.locator("[data-pickfix-intent-size]")).toHaveValue("0");
+    await expect(page.locator("[data-pickfix-intent-position-x]")).toHaveValue("0");
+    await expect(page.locator("[data-pickfix-intent-position-y]")).toHaveValue("0");
+    await expect(page.locator("[data-pickfix-prompt-output]")).toHaveValue("");
+    await expect(page.locator("[data-pickfix-prompt-status]")).toHaveText("");
+    await expect(page.locator("[data-pickfix-clipboard-fallback-region]")).toBeHidden();
+    await expect(fallback).toHaveValue("");
+    await expect(page.locator("[data-pickfix-comment-list]")).toContainText("1.");
+    await expect(page.locator("[data-pickfix-comment-marker]")).toHaveText(["1"]);
   });
 
   for (const action of delayedDismissActions) {

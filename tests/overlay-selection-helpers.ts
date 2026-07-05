@@ -177,7 +177,6 @@ export async function expectPanelSummary(page: Page, fixture: FixtureCase): Prom
   await expect(panel.locator("[data-pickfix-confidence]")).toContainText(fixture.confidence);
   await expect(panel.locator("[data-pickfix-reason]")).toHaveText(fixture.reason);
   await expect(panel.locator("[data-pickfix-reason]")).not.toContainText(/Source metadata|React owner chain fallback/);
-  await expect(panel.locator("[data-pickfix-copy-source]")).toBeVisible();
 }
 
 export async function expectPanelWithinViewport(page: Page): Promise<void> {
@@ -187,7 +186,8 @@ export async function expectPanelWithinViewport(page: Page): Promise<void> {
     const viewportHeight = document.documentElement.clientHeight;
     const visible = box.left >= 0 && box.top >= 0 && box.right <= viewportWidth && box.bottom <= viewportHeight;
     const contentFits = panel.scrollWidth <= panel.clientWidth;
-    return visible && contentFits;
+    const documentFits = document.documentElement.scrollWidth <= viewportWidth;
+    return visible && contentFits && documentFits;
   });
 
   expect(fits).toBe(true);

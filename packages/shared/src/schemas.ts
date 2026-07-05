@@ -5,6 +5,7 @@ const windowsAbsolutePathPattern = /^[A-Za-z]:[\\/]/;
 const maxPromptBytes = 256 * 1024;
 const maxExcerptBytes = 40 * 1024;
 const maxDomBytes = 10 * 1024;
+const maxTextEditFieldCharacters = 1_000;
 
 const secretValuePattern =
   /\b([A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|API_KEY|PRIVATE_KEY|ACCESS_KEY_ID|ACCESS_KEY))\b\s*[:=]\s*[^\r\n]+/gi;
@@ -68,6 +69,11 @@ const safeRelativePathSchema = z.string().min(1).superRefine((filePath, context)
 const boundedTextSchema = z.string().max(maxPromptBytes);
 const boundedExcerptSchema = z.string().max(maxExcerptBytes);
 const boundedDomSnapshotSchema = z.string().max(maxDomBytes);
+const textEditFieldSchema = z
+  .string()
+  .min(1)
+  .max(maxTextEditFieldCharacters)
+  .refine((value) => value.trim().length > 0, { message: "Text edit field cannot be blank" });
 
 export const SelectionTargetSchema = z
   .object({
@@ -134,7 +140,16 @@ export type ComponentContext = z.infer<typeof ComponentContextSchema>;
 
 export const PromptChangeSchema = z
   .object({
+    comments: z.array(boundedTextSchema).max(20).optional(),
     text: boundedTextSchema.optional(),
+    textEdit: z
+      .object({
+        from: textEditFieldSchema,
+        target: textEditFieldSchema,
+        to: textEditFieldSchema,
+      })
+      .strict()
+      .optional(),
     size: boundedTextSchema.optional(),
     position: boundedTextSchema.optional(),
     notes: boundedTextSchema.optional(),

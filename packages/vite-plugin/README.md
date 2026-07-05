@@ -1,8 +1,8 @@
 # @pickfix/vite-plugin
 
-PickFix is a Vite dev-server plugin for React projects. It injects a local-only component inspector during `vite serve`, maps selected DOM elements to source metadata, and prepares scoped prompts for Claude, Codex, or another coding agent.
+PickFix is a Vite dev-server plugin for React projects. It injects a local-only component inspector during `vite serve`, maps selected DOM elements to source metadata, previews simple size and position changes, and prepares one scoped prompt for a coding agent.
 
-The package is dev-only. It helps copy prompt text from your browser; it does not run Claude or Codex in the browser.
+The package is dev-only. It helps copy prompt text from your browser; it does not run an agent in the browser.
 
 ## Install From This GitHub Repo
 
@@ -58,27 +58,35 @@ Run your Vite dev server:
 npm run dev
 ```
 
-Open the local app URL printed by Vite, activate the PickFix inspector, hover to inspect a React component, click to select it, add your comment or intent, then choose one of the copy actions:
+Open the local app URL printed by Vite, activate the PickFix inspector, hover to inspect a React component, click to select it, then use the simplified composer:
 
-- `Copy prompt` copies a generic component-scoped prompt.
-- `Copy Claude prompt` copies the same context with a Claude-oriented header.
-- `Copy Codex command` copies a shell command string for Codex CLI use.
+- Type the requested styling or layout change as a short comment.
+- Click `Comment` to add it as a numbered note on the selected component's top-left edge.
+- Add more comments when the component needs multiple changes.
+- Adjust `Font size` when it appears for a direct visible text target to preview percentage changes.
+- Adjust the left/right and up/down sliders to preview pixel movement on the selected DOM element.
+- Edit `Text 수정` when it appears for a direct visible text replacement; the marker is added only after `Comment`.
+- Leave sliders centered to omit size or position instructions.
 
-Paste the Claude prompt into Claude manually. For Codex CLI, click `Copy prompt`, then pipe the clipboard into Codex from the app root:
+Selecting another component resets the draft comment, sliders, generated prompt output, copy status, and manual copy fallback. Saved numbered notes remain available until Reset or Close clears the session.
+
+Click `Copy prompt` to copy a focused component prompt.
+
+Paste the prompt into your coding agent manually. For Codex CLI, pipe the clipboard into Codex from the app root:
 
 ```bash
-pbpaste | codex exec "Apply this component-scoped change. Follow the verification instructions in the prompt."
+pbpaste | codex exec "Apply this selected React component change."
 ```
 
 ```bash
-xclip -selection clipboard -o | codex exec "Apply this component-scoped change. Follow the verification instructions in the prompt."
+xclip -selection clipboard -o | codex exec "Apply this selected React component change."
 ```
 
 ```powershell
-Get-Clipboard | codex exec "Apply this component-scoped change. Follow the verification instructions in the prompt."
+Get-Clipboard | codex exec "Apply this selected React component change."
 ```
 
-The prompt includes selected source context, nearby styles, DOM snapshot, package scripts, confidence, your requested change, and verification instructions.
+The default output is a short prompt with the selected component identity, source location, confidence, all numbered comments, previewed font size, previewed position, any text replacement, and a small selected-source excerpt. Text replacement is prompt-first: the browser preview is temporary, reset or selection changes restore it, and PickFix never writes source files from the page.
 
 ## Security And Privacy
 
@@ -108,7 +116,6 @@ These commands build the package, inspect the tarball contents, and smoke-test i
 - Portal selections use source metadata when present and otherwise fall back to lower-confidence owner information.
 - Fallback context may be enough for a prompt, but you should verify the selected file before applying changes.
 - There is no direct browser editing or automatic source rewrite.
-- The Edge extension is deferred. It may be explored later, but it is not included in this package.
 
 ## Troubleshooting
 
@@ -122,7 +129,7 @@ For modals, menus, and tooltips rendered through portals, inspect the confidence
 
 ### Clipboard denied
 
-Use the fallback text area shown by the overlay, select the prompt manually, and paste it into Claude or pipe it into `codex exec`.
+Use the fallback text area shown by the overlay, select the prompt manually, and paste it into your coding agent.
 
 ### Failed package install
 

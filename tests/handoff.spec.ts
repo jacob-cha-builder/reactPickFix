@@ -10,7 +10,7 @@ import {
 } from "./handoff-helpers";
 
 test.describe("clipboard handoff actions", () => {
-  test("copies generic prompt Claude prompt and Codex command for the selected component", async ({ context, page }) => {
+  test("copies a focused prompt for the selected component", async ({ context, page }) => {
     // Given: clipboard access is allowed and a component is selected with hostile user notes.
     await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://127.0.0.1:5173" });
     await page.goto("/");
@@ -23,26 +23,12 @@ test.describe("clipboard handoff actions", () => {
 
     // Then: the copied prompt is scoped to the selected component and redacted.
     expectHandoffText(genericPrompt, "FunctionFixture");
-    expect(genericPrompt).toContain("Component-scoped change");
-
-    // When: the Claude action copies the Claude-targeted endpoint prompt.
-    await page.getByRole("button", { name: "Copy Claude prompt" }).click();
-    const claudePrompt = await waitForClipboardText(page, "Claude");
-
-    // Then: the copied prompt remains selected-component scoped and Claude-specific.
-    expectHandoffText(claudePrompt, "FunctionFixture");
-    expect(claudePrompt).toContain("Claude");
-    expect(claudePrompt).toContain("verification");
-
-    // When: the Codex command action copies text only.
-    await page.getByRole("button", { name: "Copy Codex command" }).click();
-    const codexCommand = await waitForClipboardText(page, "Windows PowerShell");
-
-    // Then: the command names the selected component, includes platform examples, and does not execute in-browser.
-    expectHandoffText(codexCommand, "FunctionFixture");
-    expect(codexCommand).toContain(`macOS: pbpaste | codex exec "${handoffInstruction}"`);
-    expect(codexCommand).toContain(`Linux: xclip -selection clipboard -o | codex exec "${handoffInstruction}"`);
-    expect(codexCommand).toContain(`Windows PowerShell: Get-Clipboard | codex exec "${handoffInstruction}"`);
+    expect(genericPrompt).toContain("Change");
+    expect(genericPrompt).toContain("Comment:");
+    expect(genericPrompt).toContain("Font size: font size -8%");
+    expect(genericPrompt).toContain("Position: y +16px");
+    expect(genericPrompt).not.toContain("Verification commands");
+    expect(handoffInstruction).toContain("selected React component");
   });
 
   test("clipboard denied fallback exposes manual copy textarea", async ({ context, page }) => {
@@ -53,7 +39,7 @@ test.describe("clipboard handoff actions", () => {
     await fillComposer(page);
 
     // When: the user clicks a clipboard action.
-    await page.getByRole("button", { name: "Copy Claude prompt" }).click();
+    await page.getByRole("button", { name: "Copy prompt" }).click();
 
     // Then: the overlay exposes the exact text in a deterministic manual-copy fallback.
     const fallback = page.locator("[data-pickfix-clipboard-fallback]");
@@ -71,7 +57,7 @@ test.describe("clipboard handoff actions", () => {
     await page.goto("/");
     await selectFunctionFixture(page);
     await fillComposer(page);
-    await page.getByRole("button", { name: "Copy Claude prompt" }).click();
+    await page.getByRole("button", { name: "Copy prompt" }).click();
     const fallback = page.locator("[data-pickfix-clipboard-fallback]");
     await expect(fallback).toBeVisible();
     await expect(fallback).toHaveValue(/FunctionFixture/);
