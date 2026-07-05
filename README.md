@@ -9,8 +9,8 @@ The browser only copies text. Claude, Codex, or another agent runs separately wh
 PickFix is not published to the public npm registry yet. To use it from GitHub on another machine, clone this repository, build the Vite plugin package, pack it, then install that tarball into your React/Vite app.
 
 ```bash
-git clone https://github.com/jacob-cha-builder/pickfix.git
-cd pickfix
+git clone https://github.com/jacob-cha-builder/reactPickFix.git
+cd reactPickFix
 npm install
 npm run build --workspace packages/vite-plugin
 npm pack --workspace packages/vite-plugin
@@ -20,14 +20,14 @@ The pack command prints a tarball name such as `pickfix-vite-plugin-0.1.0.tgz`. 
 
 ```bash
 cd /path/to/your-vite-react-app
-npm install -D /path/to/pickfix/pickfix-vite-plugin-0.1.0.tgz
+npm install -D /path/to/reactPickFix/pickfix-vite-plugin-0.1.0.tgz
 ```
 
 Windows PowerShell example:
 
 ```powershell
 cd C:\path\to\your-vite-react-app
-npm install -D C:\path\to\pickfix\pickfix-vite-plugin-0.1.0.tgz
+npm install -D C:\path\to\reactPickFix\pickfix-vite-plugin-0.1.0.tgz
 ```
 
 Then add `pickfix()` to your Vite config as shown below and run your app with `npm run dev`.

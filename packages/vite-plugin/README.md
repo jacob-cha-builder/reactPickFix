@@ -9,8 +9,8 @@ The package is dev-only. It helps copy prompt text from your browser; it does no
 Until this package is published to the public npm registry, build and pack it from the repository:
 
 ```bash
-git clone https://github.com/jacob-cha-builder/pickfix.git
-cd pickfix
+git clone https://github.com/jacob-cha-builder/reactPickFix.git
+cd reactPickFix
 npm install
 npm run build --workspace packages/vite-plugin
 npm pack --workspace packages/vite-plugin
@@ -20,14 +20,14 @@ Then install the generated tarball in your React/Vite app:
 
 ```bash
 cd /path/to/your-vite-react-app
-npm install -D /path/to/pickfix/pickfix-vite-plugin-0.1.0.tgz
+npm install -D /path/to/reactPickFix/pickfix-vite-plugin-0.1.0.tgz
 ```
 
 Windows PowerShell:
 
 ```powershell
 cd C:\path\to\your-vite-react-app
-npm install -D C:\path\to\pickfix\pickfix-vite-plugin-0.1.0.tgz
+npm install -D C:\path\to\reactPickFix\pickfix-vite-plugin-0.1.0.tgz
 ```
 
 ## Install From npm
