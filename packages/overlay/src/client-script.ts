@@ -3,6 +3,7 @@ import { overlayStyles } from "./overlay-styles.js";
 import { componentSelectionClient } from "./component-selection-client.js";
 import { cursorTargetClient } from "./cursor-target-client.js";
 import { domSnapshotClient } from "./dom-snapshot-client.js";
+import { floatingToggleClient } from "./floating-toggle-client.js";
 import { panelPositionClient } from "./panel-position-client.js";
 import { promptComposerClient } from "./prompt-composer-client.js";
 import { runtimeResolverClient } from "./runtime-resolver-client.js";
@@ -27,7 +28,9 @@ ${runtimeResolverClient}
     root.id = rootId;
     root.innerHTML = ${JSON.stringify(overlayMarkup)};
     document.body.appendChild(root);
-    root.querySelector("[data-pickfix-toggle]").addEventListener("click", toggleActive);
+    const toggle = root.querySelector("[data-pickfix-toggle]");
+    toggle.addEventListener("click", toggleActive);
+    bindFloatingToggle(toggle);
     root.querySelector("[data-pickfix-reset]").addEventListener("click", clearSelection);
     root.querySelector("[data-pickfix-close]").addEventListener("click", clearSelection);
     bindPromptComposer(root);
@@ -44,7 +47,10 @@ ${runtimeResolverClient}
     return style;
   }
 
+${floatingToggleClient}
+
   function toggleActive(event) {
+    if (consumeFloatingToggleClick(event)) return;
     if (selectionLockedByClipboard()) {
       event.currentTarget.setAttribute("aria-pressed", String(state.active));
       return;

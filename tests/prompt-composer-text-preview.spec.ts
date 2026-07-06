@@ -24,7 +24,7 @@ test.describe("prompt composer text comments", () => {
 
     await page.getByLabel("Text 수정").fill("Revenue snapshot");
     await expect(page.locator("[data-pickfix-comment-marker]")).toHaveCount(0);
-    await page.getByRole("button", { name: "Comment" }).click();
+    await page.getByRole("button", { name: "Add comment" }).click();
 
     await expect(heading).toHaveText(originalText ?? "");
     await expect(page.locator("[data-pickfix-comment-marker]")).toHaveText(["1"]);
@@ -42,7 +42,7 @@ test.describe("prompt composer text comments", () => {
     await expect(page.getByLabel("Text 수정")).toBeHidden();
   });
 
-  test("orders text edit, comment, sliders, and the Comment action as one flow", async ({ page }) => {
+  test("orders text edit, comment, and the comment action as one flow", async ({ page }) => {
     await page.goto("/");
     const toggle = page.locator("[data-pickfix-toggle]");
     if ((await toggle.getAttribute("aria-pressed")) !== "true") {
@@ -52,13 +52,11 @@ test.describe("prompt composer text comments", () => {
     await page.getByTestId("function-component").locator("h2").click();
 
     await expect(page.getByLabel("Text 수정")).toBeVisible();
-    await expect(page.getByLabel("Font size")).toBeVisible();
+    await expect(page.getByLabel("Font size")).toHaveCount(0);
+    await expect(page.getByLabel("Up / down")).toHaveCount(0);
     await expect.poll(() => composerFieldOrder(page)).toEqual([
       "text",
       "comment",
-      "size",
-      "x",
-      "y",
       "button",
     ]);
   });
@@ -82,8 +80,8 @@ test.describe("prompt composer text comments", () => {
     const heading = page.getByTestId("function-component").locator("h2");
     await heading.click();
     await page.getByLabel("Text 수정").fill("Revenue snapshot");
-    await page.getByRole("button", { name: "Comment" }).click();
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Add comment" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
 
     await expect.poll(() => promptRequests.length).toBe(1);
     const promptRequest = promptRequests[0];
@@ -133,9 +131,6 @@ async function composerFieldOrder(page: Page): Promise<readonly string[]> {
     const fields = [
       ["text", "[data-pickfix-text-edit]"],
       ["comment", "[data-pickfix-comment-field]"],
-      ["size", "[data-pickfix-font-size-field]"],
-      ["x", "[data-pickfix-intent-position-x]"],
-      ["y", "[data-pickfix-intent-position-y]"],
       ["button", "[data-pickfix-add-comment]"],
     ] as const;
 

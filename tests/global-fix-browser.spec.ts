@@ -88,7 +88,7 @@ test.describe("global fix browser runtime", () => {
     const response = await contextResponse;
     const responseUrl = new URL(response.url());
     await page.getByLabel("Comment").fill("Use endpoint fallback context.");
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
 
     // Then: the served client used a generated valid id, low-confidence source context, and prompt generation succeeds.
     expect(response.status()).toBe(200);

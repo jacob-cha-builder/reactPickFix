@@ -8,8 +8,8 @@ test.describe("prompt composer visible flow", () => {
     await selectFunctionFixture(page);
 
     await page.getByLabel("Comment").fill("Shorten the heading.");
-    await page.getByRole("button", { name: "Comment" }).click();
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Add comment" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
 
     await expect(page.locator("[data-pickfix-comment-list]")).toBeVisible();
     await expect(page.getByLabel("Prompt")).toBeVisible();
@@ -22,8 +22,8 @@ test.describe("prompt composer visible flow", () => {
     await selectFunctionFixture(page);
 
     await page.getByLabel("Comment").fill("Shorten the heading.");
-    await page.getByRole("button", { name: "Comment" }).click();
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Add comment" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
 
     await expect.poll(() => promptOutputIsInViewport(page)).toBe(true);
   });

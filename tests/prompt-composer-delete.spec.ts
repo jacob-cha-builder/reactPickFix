@@ -7,9 +7,9 @@ test("deletes saved comments and renumbers markers and copied prompt comments", 
   await selectFunctionFixture(page);
 
   await page.getByLabel("Comment").fill("Remove this stale note.");
-  await page.getByRole("button", { name: "Comment" }).click();
+  await page.getByRole("button", { name: "Add comment" }).click();
   await page.getByLabel("Comment").fill("Keep this note.");
-  await page.getByRole("button", { name: "Comment" }).click();
+  await page.getByRole("button", { name: "Add comment" }).click();
   await expect(page.locator("[data-pickfix-comment-marker]")).toHaveText(["1", "2"]);
 
   await page.getByRole("button", { name: "Delete saved note 1" }).click();
@@ -19,7 +19,7 @@ test("deletes saved comments and renumbers markers and copied prompt comments", 
   await expect(commentList).toContainText("1. FunctionFixture: Keep this note.");
   await expect(page.locator("[data-pickfix-comment-marker]")).toHaveText(["1"]);
 
-  await page.getByRole("button", { name: "Copy prompt" }).click();
+  await page.getByRole("button", { name: "Create prompt" }).click();
 
   const output = page.locator("[data-pickfix-prompt-output]");
   await expect(output).toHaveValue(/Component: FunctionFixture/);

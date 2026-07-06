@@ -76,7 +76,7 @@ async function addCommentsForTargets(page: Page, targets: readonly FixtureTarget
 
     const comment = `Comment for ${fixtureTarget.comment}`;
     await page.getByLabel("Comment").fill(comment);
-    await page.getByRole("button", { name: "Comment" }).click();
+    await page.getByRole("button", { name: "Add comment" }).click();
 
     const expectedNumber = index + 1;
     await expect(page.locator("[data-pickfix-comment-list]")).toContainText(

@@ -44,8 +44,6 @@ describe("schemas and redaction", () => {
       change: {
         comments: ["Use friendlier copy", "Keep the CTA visible"],
         text: "Use friendlier copy",
-        size: "Make the card wider",
-        position: "Keep it centered",
         notes: "Preserve behavior",
       },
       target: "codex",
