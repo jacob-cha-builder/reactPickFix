@@ -150,8 +150,6 @@ export const PromptChangeSchema = z
       })
       .strict()
       .optional(),
-    size: boundedTextSchema.optional(),
-    position: boundedTextSchema.optional(),
     notes: boundedTextSchema.optional(),
   })
   .strict();

@@ -42,10 +42,12 @@ test.describe("overlay selection UI", () => {
         await expectPanelSummary(page, fixture);
         await expectPanelWithinViewport(page);
         await expect(page.getByText("Codex command examples")).toHaveCount(0);
-        await expectFontSizeToMatchTextEditAvailability(page);
-        await expect(page.getByLabel("Left / right")).toBeVisible();
-        await expect(page.getByLabel("Up / down")).toBeVisible();
-        await expect(page.getByRole("button", { name: "Copy prompt" })).toBeVisible();
+        await expect(page.getByLabel("Font size")).toHaveCount(0);
+        await expect(page.getByLabel("Left / right")).toHaveCount(0);
+        await expect(page.locator("[data-pickfix-intent-position-x]")).toHaveCount(0);
+        await expect(page.getByLabel("Up / down")).toHaveCount(0);
+        await expect(page.locator("[data-pickfix-intent-position-y]")).toHaveCount(0);
+        await expect(page.getByRole("button", { name: "Create prompt" })).toBeVisible();
         if (fixture.name === "FunctionFixture") {
           await waitForStablePanel(page);
           await page.screenshot({ path: `.omo/evidence/component-prompt-editor/browser/task-7/overlay-${width}.png` });
@@ -105,7 +107,7 @@ test.describe("overlay selection UI", () => {
     await expect.poll(() => panelIsAnchoredNearTestId(page, "function-component")).toBe(true);
 
     await page.getByLabel("Comment").fill("First note.");
-    await page.getByRole("button", { name: "Comment" }).click();
+    await page.getByRole("button", { name: "Add comment" }).click();
 
     await expect.poll(() => pinnedOutlineMatchesTestId(page, "function-component")).toBe(true);
     await page.getByTestId("css-module-component").locator("button").click();
@@ -148,14 +150,6 @@ async function pinnedOutlineMatchesTestId(page: Page, testId: string): Promise<b
 
 async function cursorFor(locator: Locator): Promise<string> {
   return locator.evaluate((element) => window.getComputedStyle(element).cursor);
-}
-
-async function expectFontSizeToMatchTextEditAvailability(page: Page): Promise<void> {
-  if (await page.getByLabel("Text 수정").isVisible()) {
-    await expect(page.getByLabel("Font size")).toBeVisible();
-  } else {
-    await expect(page.getByLabel("Font size")).toBeHidden();
-  }
 }
 
 async function panelIsAnchoredNearTestId(page: Page, testId: string): Promise<boolean> {

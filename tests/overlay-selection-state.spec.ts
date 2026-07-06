@@ -77,10 +77,10 @@ test.describe("overlay selection state controls", () => {
     await page.goto("/");
     await selectFunctionFixture(page);
     await fillComposer(page);
-    await page.getByRole("button", { name: "Comment" }).click();
+    await page.getByRole("button", { name: "Add comment" }).click();
     await expect(page.locator("[data-pickfix-comment-list]")).toContainText("1.");
     await expect(page.locator("[data-pickfix-comment-marker]")).toHaveCount(1);
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
     await expect(page.locator("[data-pickfix-prompt-output]")).toHaveValue(/FunctionFixture/);
     await expect(page.locator("[data-pickfix-prompt-status]")).not.toHaveText("");
     const fallback = page.locator("[data-pickfix-clipboard-fallback]");
@@ -93,9 +93,9 @@ test.describe("overlay selection state controls", () => {
 
     await expect(page.locator("[data-pickfix-component-name]")).toHaveText("ImportedFixture");
     await expect(page.locator("[data-pickfix-intent-text]")).toHaveValue("");
-    await expect(page.locator("[data-pickfix-intent-size]")).toHaveValue("0");
-    await expect(page.locator("[data-pickfix-intent-position-x]")).toHaveValue("0");
-    await expect(page.locator("[data-pickfix-intent-position-y]")).toHaveValue("0");
+    await expect(page.locator("[data-pickfix-intent-size]")).toHaveCount(0);
+    await expect(page.locator("[data-pickfix-intent-position-x]")).toHaveCount(0);
+    await expect(page.locator("[data-pickfix-intent-position-y]")).toHaveCount(0);
     await expect(page.locator("[data-pickfix-prompt-output]")).toHaveValue("");
     await expect(page.locator("[data-pickfix-prompt-status]")).toHaveText("");
     await expect(page.locator("[data-pickfix-clipboard-fallback-region]")).toBeHidden();

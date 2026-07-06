@@ -1,17 +1,12 @@
 import { promptComposerCommentsClient } from "./prompt-composer-comments-client.js";
-import { promptComposerPreviewClient } from "./prompt-composer-preview-client.js";
 
 export const promptComposerClient = `
 ${promptComposerCommentsClient}
-${promptComposerPreviewClient}
 
   function bindPromptComposer(root) {
     root.querySelector("[data-pickfix-composer]").addEventListener("submit", copyPrompt);
     root.querySelector("[data-pickfix-add-comment]").addEventListener("click", addCollectedComment);
     root.querySelector("[data-pickfix-clipboard-dismiss]").addEventListener("click", clearClipboardFallback);
-    bindSlider(root, "[data-pickfix-intent-size]", "[data-pickfix-size-value]", fontSizeLabel);
-    bindSlider(root, "[data-pickfix-intent-position-x]", "[data-pickfix-position-x-value]", pixelLabel);
-    bindSlider(root, "[data-pickfix-intent-position-y]", "[data-pickfix-position-y-value]", pixelLabel);
     document.addEventListener("pointermove", trackCommentListPointer, true);
     document.addEventListener("wheel", scrollCommentListAtPointer, { capture: true, passive: false });
     document.addEventListener("scroll", updateCommentMarkers, true);
@@ -80,8 +75,6 @@ ${promptComposerPreviewClient}
       comments,
       text: comments ? undefined : fieldValue("[data-pickfix-intent-text]"),
       textEdit: comments ? undefined : textEdit,
-      size: fontSizePhrase(),
-      position: positionPhrase(),
     };
   }
 
@@ -113,7 +106,6 @@ ${promptComposerPreviewClient}
       wrapper.hidden = true;
       field.value = "";
       delete field.dataset.pickfixOriginalText;
-      syncFontSizeField(false);
       return;
     }
     const sourceText = textEditSourceText(target);
@@ -121,13 +113,11 @@ ${promptComposerPreviewClient}
       wrapper.hidden = true;
       field.value = "";
       delete field.dataset.pickfixOriginalText;
-      syncFontSizeField(false);
       return;
     }
     wrapper.hidden = false;
     field.dataset.pickfixOriginalText = sourceText;
     field.value = sourceText;
-    syncFontSizeField(true);
   }
 
   function resetTextEditFieldToOriginal() {
@@ -138,7 +128,6 @@ ${promptComposerPreviewClient}
       wrapper.hidden = true;
       field.value = "";
       delete field.dataset.pickfixOriginalText;
-      syncFontSizeField(false);
       return;
     }
     const sourceText = field.dataset.pickfixOriginalText || textEditSourceText(state.textPreviewTarget);
@@ -146,19 +135,11 @@ ${promptComposerPreviewClient}
     field.value = sourceText;
     if (sourceText) field.dataset.pickfixOriginalText = sourceText;
     else delete field.dataset.pickfixOriginalText;
-    syncFontSizeField(Boolean(sourceText));
   }
 
   function textEditSourceText(target) {
     const text = target.textContent || "";
     return text.replace(/\\s+/g, " ").trim();
-  }
-
-  function syncFontSizeField(available) {
-    const wrapper = document.querySelector("[data-pickfix-font-size-field]");
-    if (!(wrapper instanceof HTMLElement)) return;
-    wrapper.hidden = !available;
-    if (!available) resetSlider("[data-pickfix-intent-size]", "[data-pickfix-size-value]", fontSizeLabel);
   }
 
   function fieldValue(selector) {
@@ -236,7 +217,6 @@ ${promptComposerPreviewClient}
   }
 
   function resetPromptComposerSelectionState(clearComments) {
-    clearPreview();
     clearClipboardFallback();
     if (clearComments) clearCollectedComments();
     else {
@@ -245,9 +225,6 @@ ${promptComposerPreviewClient}
     }
     resetField("[data-pickfix-intent-text]", "");
     resetTextEditFieldToOriginal();
-    resetSlider("[data-pickfix-intent-size]", "[data-pickfix-size-value]", fontSizeLabel);
-    resetSlider("[data-pickfix-intent-position-x]", "[data-pickfix-position-x-value]", pixelLabel);
-    resetSlider("[data-pickfix-intent-position-y]", "[data-pickfix-position-y-value]", pixelLabel);
     resetPromptOutput();
     setPromptStatus("");
   }
@@ -257,9 +234,4 @@ ${promptComposerPreviewClient}
     if (field && "value" in field) field.value = value;
   }
 
-  function resetSlider(sliderSelector, labelSelector, formatter) {
-    resetField(sliderSelector, "0");
-    const label = document.querySelector(labelSelector);
-    if (label) label.textContent = formatter(0);
-  }
 `;

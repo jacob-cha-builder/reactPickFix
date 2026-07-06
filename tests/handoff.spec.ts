@@ -18,15 +18,15 @@ test.describe("clipboard handoff actions", () => {
     await fillComposer(page);
 
     // When: the generic prompt action copies the endpoint-generated prompt.
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
     const genericPrompt = await waitForClipboardText(page, "FunctionFixture");
 
     // Then: the copied prompt is scoped to the selected component and redacted.
     expectHandoffText(genericPrompt, "FunctionFixture");
     expect(genericPrompt).toContain("Change");
     expect(genericPrompt).toContain("Comment:");
-    expect(genericPrompt).toContain("Font size: font size -8%");
-    expect(genericPrompt).toContain("Position: y +16px");
+    expect(genericPrompt).not.toContain("Font size:");
+    expect(genericPrompt).not.toContain("Position:");
     expect(genericPrompt).not.toContain("Verification commands");
     expect(handoffInstruction).toContain("selected React component");
   });
@@ -39,7 +39,7 @@ test.describe("clipboard handoff actions", () => {
     await fillComposer(page);
 
     // When: the user clicks a clipboard action.
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
 
     // Then: the overlay exposes the exact text in a deterministic manual-copy fallback.
     const fallback = page.locator("[data-pickfix-clipboard-fallback]");
@@ -57,7 +57,7 @@ test.describe("clipboard handoff actions", () => {
     await page.goto("/");
     await selectFunctionFixture(page);
     await fillComposer(page);
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
     const fallback = page.locator("[data-pickfix-clipboard-fallback]");
     await expect(fallback).toBeVisible();
     await expect(fallback).toHaveValue(/FunctionFixture/);

@@ -82,8 +82,6 @@ function requestedChangeLines(change: PromptIntent["change"]): readonly string[]
   return [
     ...commentLines(change),
     ...textEditLines(change),
-    ...optionalRequestLine("Font size", change.size),
-    ...optionalRequestLine("Position", change.position),
   ];
 }
 

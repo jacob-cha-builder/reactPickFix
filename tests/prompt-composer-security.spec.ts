@@ -109,7 +109,7 @@ test.describe("prompt composer prompt/security boundaries", () => {
       });
       const promptJson: unknown = await promptResponse.json();
       await page.getByLabel("Comment").fill(maliciousNotes);
-      await page.getByRole("button", { name: "Copy prompt" }).click();
+      await page.getByRole("button", { name: "Create prompt" }).click();
       const output = page.locator("[data-pickfix-prompt-output]");
       await expect(output).toHaveValue(/Component: FunctionFixture/);
       const prompt = await output.inputValue();

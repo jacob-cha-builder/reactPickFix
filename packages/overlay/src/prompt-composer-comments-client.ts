@@ -22,41 +22,36 @@ export const promptComposerCommentsClient = `
 
   function promptComments() {
     if (collectedComments.length === 0) return undefined;
-    const current = collectedCommentDetails(fontSizePhrase(), positionPhrase(), textEditPhrase());
+    const current = collectedCommentDetails(textEditPhrase());
     const comments = collectedComments.slice(0, maxCollectedComments).map((comment) => comment.text);
     if (current && comments.length < maxCollectedComments) comments.push(selectedComponentName() + ": " + current);
     return comments.length > 0 ? comments : undefined;
   }
 
   function collectedCommentEntry() {
-    const size = fontSizePhrase();
-    const position = positionPhrase();
     const textEdit = textEditPhrase();
-    const text = collectedCommentText(size, position, textEdit);
+    const text = collectedCommentText(textEdit);
     if (!text) return null;
-    const target = collectedCommentMarkerTarget(size, position, textEdit);
+    const target = collectedCommentMarkerTarget(textEdit);
     return target ? { target, text } : null;
   }
 
-  function collectedCommentText(size, position, textEdit) {
+  function collectedCommentText(textEdit) {
     const componentName = selectedComponentName();
-    const details = collectedCommentDetails(size, position, textEdit);
+    const details = collectedCommentDetails(textEdit);
     return details ? componentName + ": " + details : null;
   }
 
-  function collectedCommentDetails(size, position, textEdit) {
+  function collectedCommentDetails(textEdit) {
     const parts = [];
     const comment = fieldValue("[data-pickfix-intent-text]");
     if (textEdit) parts.push(textEdit);
     if (comment) parts.push(comment);
-    if (size) parts.push("Font size: " + size);
-    if (position) parts.push("Position: " + position);
     if (parts.length === 0) return null;
     return parts.join("; ");
   }
 
-  function collectedCommentMarkerTarget(size, position, textEdit) {
-    if ((size || position) && state.pinnedTarget instanceof HTMLElement) return state.pinnedTarget;
+  function collectedCommentMarkerTarget(textEdit) {
     if (textEdit && state.textPreviewTarget instanceof HTMLElement) return state.textPreviewTarget;
     return commentMarkerTarget();
   }
@@ -68,14 +63,10 @@ export const promptComposerCommentsClient = `
   }
 
   function resetDraftAfterCollectedComment() {
-    clearPreview();
     clearClipboardFallback();
     resetField("[data-pickfix-intent-text]", "");
     resetTextEditFieldToOriginal();
     resetPromptOutput();
-    resetSlider("[data-pickfix-intent-size]", "[data-pickfix-size-value]", fontSizeLabel);
-    resetSlider("[data-pickfix-intent-position-x]", "[data-pickfix-position-x-value]", pixelLabel);
-    resetSlider("[data-pickfix-intent-position-y]", "[data-pickfix-position-y-value]", pixelLabel);
   }
 
   function renderCollectedComments() {

@@ -1,6 +1,6 @@
 # @pickfix/vite-plugin
 
-PickFix is a Vite dev-server plugin for React projects. It injects a local-only component inspector during `vite serve`, maps selected DOM elements to source metadata, previews simple size and position changes, and prepares one scoped prompt for a coding agent.
+PickFix is a Vite dev-server plugin for React projects. It injects a local-only component inspector during `vite serve`, maps selected DOM elements to source metadata, and prepares one scoped prompt for a coding agent.
 
 The package is dev-only. It helps copy prompt text from your browser; it does not run an agent in the browser.
 
@@ -61,16 +61,13 @@ npm run dev
 Open the local app URL printed by Vite, activate the PickFix inspector, hover to inspect a React component, click to select it, then use the simplified composer:
 
 - Type the requested styling or layout change as a short comment.
-- Click `Comment` to add it as a numbered note on the selected component's top-left edge.
+- Click `Add comment` to add it as a numbered note on the selected component's top-left edge.
 - Add more comments when the component needs multiple changes.
-- Adjust `Font size` when it appears for a direct visible text target to preview percentage changes.
-- Adjust the left/right and up/down sliders to preview pixel movement on the selected DOM element.
-- Edit `Text 수정` when it appears for a direct visible text replacement; the marker is added only after `Comment`.
-- Leave sliders centered to omit size or position instructions.
+- Edit `Text 수정` when it appears for a direct visible text replacement; the marker is added only after `Add comment`.
 
-Selecting another component resets the draft comment, sliders, generated prompt output, copy status, and manual copy fallback. Saved numbered notes remain available until Reset or Close clears the session.
+Selecting another component resets the draft comment, generated prompt output, copy status, and manual copy fallback. Saved numbered notes remain available until Reset or Close clears the session.
 
-Click `Copy prompt` to copy a focused component prompt.
+Click `Create prompt` to copy a focused component prompt.
 
 Paste the prompt into your coding agent manually. For Codex CLI, pipe the clipboard into Codex from the app root:
 
@@ -86,7 +83,7 @@ xclip -selection clipboard -o | codex exec "Apply this selected React component 
 Get-Clipboard | codex exec "Apply this selected React component change."
 ```
 
-The default output is a short prompt with the selected component identity, source location, confidence, all numbered comments, previewed font size, previewed position, any text replacement, and a small selected-source excerpt. Text replacement is prompt-first: the browser preview is temporary, reset or selection changes restore it, and PickFix never writes source files from the page.
+The default output is a short prompt with the selected component identity, source location, confidence, all numbered comments, any text replacement, and a small selected-source excerpt. Text replacement is prompt-first: the browser preview is temporary, reset or selection changes restore it, and PickFix never writes source files from the page.
 
 ## Security And Privacy
 
@@ -94,7 +91,7 @@ PickFix endpoints are served under `/__pickfix/*` in Vite serve mode. They accep
 
 PickFix does not collect provider credentials. It has no telemetry, cloud sync, account service, or prompt history service. Comments you type become prompt text and are copied for external tools, so do not include secrets in change notes.
 
-Production builds should not include PickFix overlay code, `/__pickfix/*` endpoints, or inspector strings.
+Production builds should not include the floating `P` icon, PickFix overlay code, `/__pickfix/*` endpoints, or inspector strings. `pickfix()` applies only during Vite serve mode; deploy your normal `vite build` output, not the dev server.
 
 ## Package Verification
 

@@ -79,7 +79,7 @@ All spacing derives from a 4px base.
 ### Layout
 
 - Inspector panel placement: anchored popover near the selected target with 12px target gap and 8px viewport clamp, choosing the candidate with the least selected-target and nearby-source overlap.
-- Panel max height: min(560px, calc(100dvh - 16px)), with internal scrolling for prompt controls when the selected target is near a viewport edge.
+- Panel max height: min(400px, calc(100dvh - 16px)), with internal scrolling for prompt controls when the selected target is near a viewport edge.
 - Selection outline offset: 2px outside the target bounds; pinned state uses the same geometry with the pinned color token.
 - Prompt composer fields stack vertically and use full available panel width.
 
@@ -121,26 +121,26 @@ All spacing derives from a 4px base.
 
 ### Prompt composer
 
-- **Structure**: compact one-column controls with optional `Text 수정` above `Comment`, optional `Font size` for direct text targets, horizontal position slider, vertical position slider, a bottom `Comment` action for the whole draft, compact numbered comment list with per-row delete controls, one copy action, visible generated prompt output below comments, and manual copy fallback.
-- **Slider semantics**: size is hidden unless a direct visible text target is selected; when visible, it centers at no resize, negative values request smaller, and positive values request larger on that text target. Horizontal centers at no movement, negative moves left, and positive moves right. Vertical centers at no movement, negative moves up, and positive moves down on the selected component target.
+- **Structure**: compact one-column controls with optional `Text 수정` above `Comment`, a bottom `Add comment` action for the whole draft, compact numbered comment list with per-row delete controls, one `Create prompt` action, visible generated prompt output below comments, and manual copy fallback.
 - **Number markers**: added comments render as small numbered circular markers attached to the clicked target's top-left edge with no inset, and as matching numbered rows inside the composer.
 - **Comment deletion**: deleting a saved comment removes its marker, renumbers remaining rows and markers from 1, clears any stale generated output, and keeps draft inputs unchanged.
-- **Text changes**: selecting a direct visible text target reveals `Text 수정` above `Comment`, prefilled with the current text. Editing this field does not mutate the DOM and does not create a marker until `Comment` saves it as a numbered comment.
-- **Prompt-first rule**: font-size and position previews are temporary browser state only; reset, close, or selection change restores the DOM, and the browser never writes source files.
-- **Reset behavior**: changing the pinned selection clears draft comment text, slider previews, generated output, copy status, and clipboard fallback. Saved numbered comments and their component markers persist across selection changes until Reset or Close clears the session.
+- **Text changes**: selecting a direct visible text target reveals `Text 수정` above `Comment`, prefilled with the current text. Editing this field does not mutate the DOM and does not create a marker until `Add comment` saves it as a numbered comment.
+- **Prompt-first rule**: comments and text replacement notes are copied as prompt text only, and the browser never writes source files.
+- **Reset behavior**: changing the pinned selection clears draft comment text, generated output, copy status, and clipboard fallback. Saved numbered comments and their component markers persist across selection changes until Reset or Close clears the session.
 - **Selection continuity**: after a comment is added, the composer stays available for another comment on the same target. The anchored popover keeps the selected target highlighted and clamps inside the viewport; its chrome lets page clicks pass through while real inputs and buttons stay interactive.
 - **Variants**: generic short prompt and clipboard fallback.
-- **Spacing**: group gap `--pf-space-4`, field gap `--pf-space-2`; slider labels must reserve enough inline space to avoid layout shift when values change.
+- **Spacing**: group gap `--pf-space-4`, field gap `--pf-space-2`; controls use full panel width without layout shift when text changes.
 - **States**: empty, dirty, generating, copied, clipboard denied, error.
-- **Accessibility**: each field has a visible label, keyboard focus ring, and deterministic tab order; sliders expose their current value with readable text.
+- **Accessibility**: each field has a visible label, keyboard focus ring, and deterministic tab order.
 - **Motion**: copied confirmation fades in/out using opacity only.
 
 ### Toolbar button
 
 - **Structure**: icon or short text button with accessible name.
-- **Variants**: primary copy action, secondary reset/close action, toggle action.
+- **Variants**: primary copy action, secondary reset/close action, floating draggable toggle action.
 - **Spacing**: min height 32px, horizontal padding `--pf-space-3`, icon gap `--pf-space-2`.
 - **States**: default, hover, active, disabled, loading, focus.
+- **Floating behavior**: the Pickfix toggle starts near the viewport edge, can be dragged to another viewport-clamped position, and dragging it must not toggle selection mode.
 - **Accessibility**: focus-visible uses `--pf-focus-ring`; disabled controls remain readable.
 - **Motion**: 100ms background, border, opacity transitions.
 

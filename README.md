@@ -1,6 +1,6 @@
 # PickFix
 
-PickFix is a dev-only Vite React plugin that helps you turn a rendered component into a focused prompt for a coding agent. It runs inside your local Vite dev server, lets you select a component in the browser, bundles nearby source context, previews simple size and position changes, and copies one short prompt.
+PickFix is a dev-only Vite React plugin that helps you turn a rendered component into a focused prompt for a coding agent. It runs inside your local Vite dev server, lets you select a component in the browser, bundles nearby source context, and copies one short prompt.
 
 The browser only copies text. Claude, Codex, or another agent runs separately wherever you paste or pipe that prompt.
 
@@ -71,7 +71,7 @@ npm install
 npm run dev:example
 ```
 
-Open `http://127.0.0.1:5173`, select one of the dashboard panels with PickFix, use the popover beside the selected component, then click `Comment` to pin the request as a numbered top-left note. For direct text targets, edit `Text 수정` above `Comment`; for layout or styling, use Comment and the sliders, then copy the prompt.
+Open `http://127.0.0.1:5173`, select one of the dashboard panels with PickFix, use the popover beside the selected component, then click `Add comment` to pin the request as a numbered top-left note. For direct text targets, edit `Text 수정` above `Comment`; for layout or styling, write the comment, then create the prompt.
 
 Run the browser test suite against that same playground:
 
@@ -86,22 +86,20 @@ npm run test:e2e
 3. Activate the PickFix inspector.
 4. Hover the page to inspect React component candidates.
 5. Select the component you want to change.
-6. Type a short comment and click `Comment` to add it as a numbered note on the selected component.
-7. Add more comments if needed, adjust position sliders, use `Text 수정` or `Font size` for direct text targets, then click `Copy prompt`.
+6. Type a short comment and click `Add comment` to add it as a numbered note on the selected component.
+7. Add more comments if needed, use `Text 수정` for direct text targets, then click `Create prompt`.
 
-The draft composer resets whenever you select a different component: comment text, sliders, generated prompt output, copy status, and manual copy fallback return to a clean state. Saved numbered comments persist until `Reset` or `Close` clears the session.
+The draft composer resets whenever you select a different component: comment text, generated prompt output, copy status, and manual copy fallback return to a clean state. Saved numbered comments persist until `Reset` or `Close` clears the session.
 
-Numbered comments stay visible as circular markers attached to the selected component's top-left edge. The matching numbered rows stack inside the popover, with the generated prompt shown directly below them after `Copy prompt`.
+Numbered comments stay visible as circular markers attached to the selected component's top-left edge. The matching numbered rows stack inside the popover, with the generated prompt shown directly below them after `Create prompt`.
 
-The `Font size` slider appears only for direct visible text targets and previews percentage changes on that text. The left/right and up/down sliders preview pixel movement of the selected component with `transform: translate(...)`. Leaving a slider centered omits that instruction from the prompt.
+For text copy changes, select the visible text target and write the desired replacement in `Text 수정`. PickFix keeps this prompt-first: editing the field does not mutate source files or the browser DOM, and a numbered marker appears only after `Add comment`.
 
-For text copy changes, select the visible text target and write the desired replacement in `Text 수정`. PickFix keeps this prompt-first: editing the field does not mutate source files or the browser DOM, and a numbered marker appears only after `Comment`.
-
-PickFix generates a short prompt by default. It includes the selected component identity, source location, confidence score, all numbered comments, previewed font size, previewed position, and a small selected-source excerpt. Component matching can be approximate, so review the selected file and confidence before handing the prompt to an agent.
+PickFix generates a short prompt by default. It includes the selected component identity, source location, confidence score, all numbered comments, and a small selected-source excerpt. Component matching can be approximate, so review the selected file and confidence before handing the prompt to an agent.
 
 ## Use The Prompt
 
-Click `Copy prompt`, then paste the clipboard content into your coding agent. For Codex CLI, you can pipe the clipboard from the app root:
+Click `Create prompt`, then paste the clipboard content into your coding agent. For Codex CLI, you can pipe the clipboard from the app root:
 
 ```bash
 pbpaste | codex exec "Apply this selected React component change."
@@ -133,7 +131,7 @@ For a consumer app, use your normal Vite build to confirm PickFix remains dev-on
 npm run build
 ```
 
-PickFix is configured for Vite serve mode and should not inject the overlay, `/__pickfix/*` endpoints, or inspector strings into production build output.
+PickFix is configured for Vite serve mode only. Normal `vite build` production output should not include the floating `P` icon, overlay code, `/__pickfix/*` endpoints, or inspector strings. Do not use `npm run dev` as a production server; deploy the files produced by your normal production build.
 
 ## Security And Privacy
 

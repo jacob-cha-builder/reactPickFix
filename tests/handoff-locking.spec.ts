@@ -23,7 +23,7 @@ test.describe("clipboard handoff pending selection locks", () => {
     await installPendingClipboardProbe(page);
 
     // When: a FunctionFixture copy reaches clipboard write, then the user clicks ImportedFixture before denial rejects it.
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
     await waitForPendingClipboardWrite(page);
     await clickImportedFixtureWithoutWaiting(page);
     await expect(page.locator("[data-pickfix-component-name]")).toHaveText("FunctionFixture");
@@ -52,7 +52,7 @@ test.describe("clipboard handoff pending selection locks", () => {
     await installNeutralizationFailureClipboardProbe(page);
 
     // When: the user clicks ImportedFixture while the FunctionFixture write is pending.
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
     await waitForPendingClipboardWrite(page);
     await clickImportedFixtureWithoutWaiting(page);
     await expect(page.locator("[data-pickfix-component-name]")).toHaveText("FunctionFixture");
@@ -100,7 +100,7 @@ test.describe("clipboard handoff pending selection locks", () => {
     });
 
     // When: ImportedFixture is clicked before the old clipboard denial settles.
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
     await waitForPendingClipboardWrite(page);
     await clickImportedFixtureWithoutWaiting(page);
     await rejectPendingClipboardWrite(page);
@@ -127,7 +127,7 @@ test.describe("clipboard handoff pending selection locks", () => {
     await fillComposer(page);
     await installPendingClipboardProbe(page);
 
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
     await waitForPendingClipboardWrite(page);
     await clickImportedFixtureWithoutWaiting(page);
     await expect(page.locator("[data-pickfix-component-name]")).toHaveText("FunctionFixture");

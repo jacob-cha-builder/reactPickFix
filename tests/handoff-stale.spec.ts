@@ -40,7 +40,7 @@ test.describe("clipboard handoff stale responses", () => {
     });
 
     // When: a copy starts for FunctionFixture, then the user pins ImportedFixture before the response resolves.
-    await page.getByRole("button", { name: "Copy prompt" }).click();
+    await page.getByRole("button", { name: "Create prompt" }).click();
     await requested.promise;
     await selectImportedFixture(page);
     release.resolve();

@@ -1,10 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { PromptChangeSchema } from "../packages/shared/src/schemas";
-import { setSlider } from "./handoff-helpers";
 import { requireRecord } from "./prompt-composer-helpers";
 
-test("saves comment text, text change comments, and slider adjustments as independent comment entries", async ({ page }) => {
+test("saves comment text and text change comments as independent comment entries", async ({ page }) => {
   const promptRequests: Readonly<Record<string, unknown>>[] = [];
   await page.route("**/__pickfix/prompt", async (route) => {
     const requestBody = route.request().postData();
@@ -24,32 +23,30 @@ test("saves comment text, text change comments, and slider adjustments as indepe
   await page.getByTestId("function-component").click();
   await expect(page.locator("[data-pickfix-component-name]")).toHaveText("FunctionFixture");
   await page.getByLabel("Comment").fill("Make this card calmer.");
-  await page.getByRole("button", { name: "Comment" }).click();
+  await page.getByRole("button", { name: "Add comment" }).click();
 
   const heading = page.getByTestId("function-component").locator("h2");
   await heading.click();
   await expectComposerVisibleAfterPointerMove(page);
   await page.getByLabel("Text 수정").fill("Revenue snapshot");
-  await page.getByRole("button", { name: "Comment" }).click();
+  await page.getByRole("button", { name: "Add comment" }).click();
 
   await page.getByTestId("nested-component").locator("h2").click();
   await expect(page.locator("[data-pickfix-component-name]")).toHaveText("NestedFixture");
   await expectComposerVisibleAfterPointerMove(page);
-  await setSlider(page, "Font size", 2);
-  await setSlider(page, "Left / right", -12);
-  await setSlider(page, "Up / down", 24);
-  await page.getByRole("button", { name: "Comment" }).click();
+  await page.getByLabel("Comment").fill("Tighten the nested heading spacing.");
+  await page.getByRole("button", { name: "Add comment" }).click();
 
   await expect(page.locator("[data-pickfix-comment-list]")).toContainText("1. FunctionFixture: Make this card calmer.");
   await expect(page.locator("[data-pickfix-comment-list]")).toContainText(
     '2. FunctionFixture: Text 수정: replace "Function component revenue snapshot" with "Revenue snapshot"',
   );
   await expect(page.locator("[data-pickfix-comment-list]")).toContainText(
-    "3. NestedFixture: Font size: font size +16%; Position: x -12px, y +24px",
+    "3. NestedFixture: Tighten the nested heading spacing.",
   );
   await expect(page.locator("[data-pickfix-comment-marker]")).toHaveText(["1", "2", "3"]);
 
-  await page.getByRole("button", { name: "Copy prompt" }).click();
+  await page.getByRole("button", { name: "Create prompt" }).click();
 
   await expect.poll(() => promptRequests.length).toBe(1);
   const promptRequest = promptRequests[0];
@@ -64,21 +61,21 @@ test("saves comment text, text change comments, and slider adjustments as indepe
   expect(parsedChange.data.comments).toEqual([
     "FunctionFixture: Make this card calmer.",
     'FunctionFixture: Text 수정: replace "Function component revenue snapshot" with "Revenue snapshot"',
-    "NestedFixture: Font size: font size +16%; Position: x -12px, y +24px",
+    "NestedFixture: Tighten the nested heading spacing.",
   ]);
   expect(parsedChange.data.textEdit).toBeUndefined();
-  expect(parsedChange.data.size).toBeUndefined();
-  expect(parsedChange.data.position).toBeUndefined();
 
   const output = page.locator("[data-pickfix-prompt-output]");
   await expect(output).toHaveValue(/Comments/);
   const prompt = await output.inputValue();
   expect(prompt).toContain("1. FunctionFixture: Make this card calmer.");
   expect(prompt).toContain('2. FunctionFixture: Text 수정: replace "Function component revenue snapshot" with "Revenue snapshot"');
-  expect(prompt).toContain("3. NestedFixture: Font size: font size +16%; Position: x -12px, y +24px");
+  expect(prompt).toContain("3. NestedFixture: Tighten the nested heading spacing.");
+  expect(prompt).not.toContain("Font size:");
+  expect(prompt).not.toContain("Position:");
 });
 
-test("bundles text edits, comment text, font size, and position into one saved comment", async ({ page }) => {
+test("bundles text edits and comment text into one saved comment", async ({ page }) => {
   await page.goto("/");
   const toggle = page.locator("[data-pickfix-toggle]");
   if ((await toggle.getAttribute("aria-pressed")) !== "true") {
@@ -91,14 +88,11 @@ test("bundles text edits, comment text, font size, and position into one saved c
 
   await page.getByLabel("Text 수정").fill("Revenue snapshot");
   await page.getByLabel("Comment").fill("Make the headline more compact.");
-  await setSlider(page, "Font size", 2);
-  await setSlider(page, "Left / right", -12);
-  await setSlider(page, "Up / down", 24);
-  await page.getByRole("button", { name: "Comment" }).click();
+  await page.getByRole("button", { name: "Add comment" }).click();
 
   const commentList = page.locator("[data-pickfix-comment-list]");
   await expect(commentList).toContainText(
-    '1. FunctionFixture: Text 수정: replace "Function component revenue snapshot" with "Revenue snapshot"; Make the headline more compact.; Font size: font size +16%; Position: x -12px, y +24px',
+    '1. FunctionFixture: Text 수정: replace "Function component revenue snapshot" with "Revenue snapshot"; Make the headline more compact.',
   );
   await expect(page.locator("[data-pickfix-comment-marker]")).toHaveText(["1"]);
 });
@@ -112,7 +106,7 @@ test("keeps composer visible when selecting another target after a comment", asy
 
   await page.getByTestId("function-component").click();
   await page.getByLabel("Comment").fill("First covered-selection comment.");
-  await page.getByRole("button", { name: "Comment" }).click();
+  await page.getByRole("button", { name: "Add comment" }).click();
 
   await page.getByTestId("css-module-component").locator("button").click();
   await expect(page.locator("[data-pickfix-component-name]")).toHaveText("CssModuleFixture");
@@ -121,13 +115,13 @@ test("keeps composer visible when selecting another target after a comment", asy
     "1. FunctionFixture: First covered-selection comment.",
   );
   await page.getByLabel("Comment").fill("Second right-side-selection comment.");
-  await page.getByRole("button", { name: "Comment" }).click();
+  await page.getByRole("button", { name: "Add comment" }).click();
   await expect(page.locator("[data-pickfix-comment-marker]")).toHaveText(["1", "2"]);
 });
 
 async function expectComposerVisibleAfterPointerMove(page: Page): Promise<void> {
   await page.mouse.move(12, 12);
   await expect(page.getByLabel("Comment")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Comment" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add comment" })).toBeVisible();
   await expect(page.locator("[data-pickfix-comment-list]")).toBeVisible();
 }
